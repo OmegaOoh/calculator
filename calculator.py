@@ -2,7 +2,7 @@ import math
 
 MATH_FUNCTIONS = {'sqrt': 'math.sqrt', 'exp': 'math.exp',
                   'log10': 'math.log10', 'ln':  'ln', 'log2': 'math.log2'}
-OPERATOR_REPLACER = {'^': '**', '%': '/100', 'mod': '%', ')(': ")*("}
+OPERATOR_REPLACER = {'^': '**', '%': '/100 *', 'mod': '%', ')(': ")*("}
 
 
 class Calculator:
@@ -14,6 +14,8 @@ class Calculator:
             expression = expression.replace(i, OPERATOR_REPLACER[i])
         for i in MATH_FUNCTIONS:
             expression = expression.replace(i, MATH_FUNCTIONS[i])
+        if expression.endswith('/100 *'):
+            expression = expression[:-1]
         # Check for Parentheses
         open_p = expression.count('(')
         close_p = expression.count(')')
@@ -35,9 +37,11 @@ class Calculator:
                 return text[:-len(i)-1]
         return text[:-1]
 
-
-    def get_function(self):
+    @staticmethod
+    def get_function():
         return [i for i in MATH_FUNCTIONS]
 
 def ln(x: (int, float)) -> float:
     return math.log(x, math.e)
+
+
