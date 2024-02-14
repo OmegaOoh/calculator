@@ -4,6 +4,7 @@ from tkinter import ttk
 from keypad import Keypad
 from calculatorcontroller import CalculatorController
 
+OPERATOR = ["(", ")", '*', '/', '+', '-', '^', 'mod', '%']
 
 class CalculatorUI(tk.Tk):
     @staticmethod
@@ -99,7 +100,6 @@ class CalculatorUI(tk.Tk):
 
         # There is only 0
         b = len(curr) == 1 and curr[0] == '0'
-        print(b)
         if self.b_calculated and self._isnum(widget['text']) or b:
             self.screen.set('')
             curr = ''
@@ -119,13 +119,17 @@ class CalculatorUI(tk.Tk):
                 self.screen.set(curr + '(')
                 return
 
+        if len(curr) > 2 and curr[-2] in OPERATOR and curr[-1] == '0':
+            self.screen.set(curr[:-1])
+            curr = self.screen.get()
         self.screen.set(curr + widget['text'])
 
     def add_function(self, event: tk.Event):
         curr = self.screen.get()
-        if curr == 'Invalid Format':
+        if curr == 'Invalid Format' or self.b_calculated:
             self.screen.set('')
             curr = ''
+        self.b_calculated = False
         c_func = self.function['values'][self.function.current()]
         if not self.b_calculated and not curr == '':
             if not self._isnum(curr[-1]):
@@ -147,8 +151,8 @@ class CalculatorUI(tk.Tk):
         """ Clear all Equation on Screen """
         self.screen.set('')
         self.b_calculated = False
-        self.exp_his.option_clear()
-        self.res_his.option_clear()
+        self.exp_his.delete(0, tk.END)
+        self.res_his.delete(0, tk.END)
 
     def load_expression(self, x,**kwargs):
         curr = self.exp_his.curselection()

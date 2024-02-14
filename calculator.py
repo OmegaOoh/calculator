@@ -2,7 +2,11 @@ import math
 
 MATH_FUNCTIONS = {'sqrt': 'math.sqrt', 'exp': 'math.exp',
                   'log10': 'math.log10', 'ln':  'ln', 'log2': 'math.log2'}
-OPERATOR_REPLACER = {'^': '**', '%': '/100 *', 'mod': '%', ')(': ")*("}
+OPERATOR_REPLACER = {'^': '**', '%': '/100  *', 'mod': '%', ')(': ")*("}\
+
+
+def ln(x: (int, float)) -> float:
+    return math.log(x, math.e)
 
 
 class Calculator:
@@ -40,8 +44,5 @@ class Calculator:
     @staticmethod
     def get_function():
         return [i for i in MATH_FUNCTIONS]
-
-def ln(x: (int, float)) -> float:
-    return math.log(x, math.e)
 
 
