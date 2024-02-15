@@ -21,8 +21,6 @@ def playsound(filename = 'beep.mp3'):
     mixer.music.play(loops=0)
 
 
-
-
 class CalculatorUI(tk.Tk):
     @staticmethod
     def _isnum(x):
@@ -104,6 +102,7 @@ class CalculatorUI(tk.Tk):
         sync_listbox.yview_scroll(int(-4*(event.delta/120)), "units")
 
     def scrollbar_handler(self, *args):
+        """ Handle Scrolling by Scrollbar"""
         if args[0] == 'scroll':
             self.exp_his.yview_scroll(int(args[1]), args[2])
             self.res_his.yview_scroll(int(args[1]), args[2])
@@ -115,7 +114,6 @@ class CalculatorUI(tk.Tk):
         """ Set Math Functions to combobox"""
         self.function['values'] = CalculatorController.load_func()
         self.function.current(0)
-
 
     def keypad_press_handler(self, event: tk.Event):
         """ Handle Operation and Number Key Press
@@ -170,7 +168,7 @@ class CalculatorUI(tk.Tk):
             self.label.configure(foreground='red')
             playsound()
 
-    def add_function(self, event: tk.Event):
+    def add_function(self, *args):
         curr = self.screen.get()
         if curr == 'Invalid Format' or self.b_calculated:
             self.screen.set('')
@@ -202,7 +200,7 @@ class CalculatorUI(tk.Tk):
         self.exp_his.delete(0, tk.END)
         self.res_his.delete(0, tk.END)
 
-    def load_expression(self, x, **kwargs):
+    def load_expression(self, *args):
         curr = self.exp_his.curselection()
         try:
             t = self.exp_his.get(curr[0])

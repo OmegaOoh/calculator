@@ -18,4 +18,5 @@ A Basic Calculator with UI
 ``python main.py``
 
 ### UML Diagram
+![UML Class Diagram](./CalculatorUML.png)
 
