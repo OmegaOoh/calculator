@@ -1,10 +1,27 @@
+"""
+Calculator UI Module
+CalculatorUI Class which Construct, Manage and Display the GUI for Calculator
+"""
+
+
 import tkinter as tk
 from tkinter import ttk
+from pygame import mixer
 
 from keypad import Keypad
 from calculatorcontroller import CalculatorController
 
 OPERATOR = ["(", ")", '*', '/', '+', '-', '^', 'mod', '%']
+
+
+def playsound(filename = 'beep.mp3'):
+    """ Function to Play Sound Using Pygame
+    :param filename: Name of the Audio file"""
+    mixer.music.load(filename)
+    mixer.music.play(loops=0)
+
+
+
 
 class CalculatorUI(tk.Tk):
     @staticmethod
@@ -16,7 +33,9 @@ class CalculatorUI(tk.Tk):
             return False
 
     def __init__(self):
+        """ Initialize the attribute of the UI """
         super().__init__()
+        mixer.init()
         self.numpad = Keypad(self, list('789456123 0.'), 3)
         operator = ["( )", '*', '/', '+', '-', '^', 'mod', '%']
         self.operator = Keypad(self, operator, 2)
@@ -25,13 +44,15 @@ class CalculatorUI(tk.Tk):
         self.exp_his = tk.Listbox(self, height=3)
         self.res_his = tk.Listbox(self, height=3)
         self.b_calculated = False
+        self.label = ttk.Label(self, textvariable=self.screen, foreground='white', anchor='e')
         self.init_component()
         self.get_mathfunc()
 
     def init_component(self):
+        """ Initialize the tkinter components """
         self.title('Calculator')
         self.minsize(width=200, height=250)
-        s = ttk.Label(self, textvariable=self.screen, foreground='white', anchor='e')
+
         eq = ttk.Button(self, text='=')
         clr = ttk.Button(self, text='CLR', command=self.clear_handler)
         delete = ttk.Button(self, text='DEL', command=self.del_handler)
@@ -39,7 +60,7 @@ class CalculatorUI(tk.Tk):
 
         # Style
         font = ('Arial', 20)
-        s.config(background="black", font=font)
+        self.label.config(background="black", font=font)
         style = ttk.Style()
         style.configure("Eq.TButton", foreground="Blue")
         eq.configure(style='Eq.TButton')
@@ -48,11 +69,11 @@ class CalculatorUI(tk.Tk):
         # Event Handler
         self.numpad.bind('<Button-1>', self.keypad_press_handler)
         self.operator.bind('<Button-1>', self.keypad_press_handler)
-        eq.bind('<Button-1>', self.keypad_press_handler)
+        eq.bind('<Button-1>', self.handle_equal)
         self.function.bind('<<ComboboxSelected>>', self.add_function)
-        self.exp_his.config(yscrollcommand=scroll.set)
-        self.res_his.config(yscrollcommand=scroll.set)
-        scroll.config(command=self.exp_his.yview)
+        self.exp_his.bind('<MouseWheel>',lambda e: self.scroll_handler(self.res_his, e))
+        self.res_his.bind('<MouseWheel>',lambda e: self.scroll_handler(self.exp_his, e))
+        scroll.config(command=self.scrollbar_handler)
         self.exp_his.bind('<<ListboxSelect>>', self.load_expression)
         self.res_his.bind('<<ListboxSelect>>', self.load_answer)
 
@@ -69,7 +90,7 @@ class CalculatorUI(tk.Tk):
         self.res_his.grid(row=0, column=3, **style)
         self.exp_his.grid(row=0, column=0, **style)
         scroll.grid(row=0, column=4, **style)
-        s.grid(row=1, column=0, columnspan=5, **style)
+        self.label.grid(row=1, column=0, columnspan=5, **style)
         self.function.grid(row=2, column=0, columnspan=2, **style)
         delete.grid(row=2, column=2, **style)
         clr.grid(row=2, column=3, columnspan=2,**style)
@@ -77,25 +98,37 @@ class CalculatorUI(tk.Tk):
         self.operator.grid(row=3, column=3, columnspan=2, **style)
         eq.grid(row=4, column=3, columnspan=3, **style)
 
+    def scroll_handler(self, sync_listbox, event: tk.Event):
+        """ Handle Syncing Listbox scroll events """
+        print(event)
+        sync_listbox.yview_scroll(int(-4*(event.delta/120)), "units")
+
+    def scrollbar_handler(self, *args):
+        if args[0] == 'scroll':
+            self.exp_his.yview_scroll(int(args[1]), args[2])
+            self.res_his.yview_scroll(int(args[1]), args[2])
+        else:
+            self.exp_his.yview_moveto(float(args[1]))
+            self.res_his.yview_moveto(float(args[1]))
+
     def get_mathfunc(self):
         """ Set Math Functions to combobox"""
         self.function['values'] = CalculatorController.load_func()
         self.function.current(0)
 
+
     def keypad_press_handler(self, event: tk.Event):
-        """ Keypad press handler """
+        """ Handle Operation and Number Key Press
+        Add the key that is pressed onto the screen label
+        with some validation to prevent error.
+         """
         widget = event.widget
         if str(widget['text']).isspace():
             return
         # Handle Equal Sign
         curr = self.screen.get()
         if widget['text'] == '=':
-            ans = CalculatorController.get_answer(curr)
-            if ans != 'Invalid Format':
-                self.exp_his.insert(0, curr + ' =')
-                self.res_his.insert(0, ans)
-            self.screen.set(str(ans))
-            self.b_calculated = True
+            self.handle_equal(curr)
             return
 
         # There is only 0
@@ -124,6 +157,19 @@ class CalculatorUI(tk.Tk):
             curr = self.screen.get()
         self.screen.set(curr + widget['text'])
 
+    def handle_equal(self, *args):
+        self.label.configure(foreground='white')
+        curr = self.screen.get()
+        ans = CalculatorController.get_answer(curr)
+        if ans != 'Invalid Format':
+            self.exp_his.insert(0, curr + ' =')
+            self.res_his.insert(0, ans)
+            self.screen.set(str(ans))
+            self.b_calculated = True
+        else:
+            self.label.configure(foreground='red')
+            playsound()
+
     def add_function(self, event: tk.Event):
         curr = self.screen.get()
         if curr == 'Invalid Format' or self.b_calculated:
@@ -131,13 +177,14 @@ class CalculatorUI(tk.Tk):
             curr = ''
         self.b_calculated = False
         c_func = self.function['values'][self.function.current()]
-        if not self.b_calculated and not curr == '':
-            if not self._isnum(curr[-1]):
-                self.screen.set(curr + c_func + "(")
-            else:
-                self.screen.set(curr + '*' + c_func + "(")
+        if curr == '':
+            self.screen.set(curr + c_func + "(")
+        elif not self._isnum(curr[-1]):
+            self.screen.set(curr + c_func + "(")
+        elif self._isnum(curr) or self._isnum(curr[-1]):
+            self.screen.set(c_func + "(" + curr + ")")
         else:
-            self.screen.set(c_func + "(")
+            self.screen.set(curr + c_func + "(")
 
     def del_handler(self, **args):
         """ Handle Delete Event"""
@@ -151,10 +198,11 @@ class CalculatorUI(tk.Tk):
         """ Clear all Equation on Screen """
         self.screen.set('')
         self.b_calculated = False
+        self.label.configure(foreground='white')
         self.exp_his.delete(0, tk.END)
         self.res_his.delete(0, tk.END)
 
-    def load_expression(self, x,**kwargs):
+    def load_expression(self, x, **kwargs):
         curr = self.exp_his.curselection()
         try:
             t = self.exp_his.get(curr[0])
