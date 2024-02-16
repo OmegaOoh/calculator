@@ -11,6 +11,9 @@ OPERATOR_REPLACER = {'^': '**', '%': '/100  *', 'mod': '%'}
 
 
 def ln(x: (int, float)) -> float:
+    """ A function to Calculate Log base e.
+    :params x: an input number
+    :return result of log base e"""
     return math.log(x, math.e)
 
 
@@ -22,10 +25,10 @@ class Calculator:
         :param expression: string expression to be calculate
         :return: string the result of the calculation
         """
-        for i in OPERATOR_REPLACER:
-            expression = expression.replace(i, OPERATOR_REPLACER[i])
-        for i in MATH_FUNCTIONS:
-            expression = expression.replace(i, MATH_FUNCTIONS[i])
+        for i in OPERATOR_REPLACER.items():
+            expression = expression.replace(i[0], i[1])
+        for i in MATH_FUNCTIONS.items():
+            expression = expression.replace(i[0], i[1])
         if expression.endswith('/100 *'):
             expression = expression[:-1]
         # Check for Parentheses
@@ -37,7 +40,7 @@ class Calculator:
             close_p = expression.count(')')
         try:
             return str(eval(expression))
-        except (SyntaxError, ZeroDivisionError):
+        except (SyntaxError, ZeroDivisionError, ValueError, TypeError):
             return 'Invalid Format'
 
     @staticmethod
@@ -56,6 +59,4 @@ class Calculator:
     @staticmethod
     def get_function():
         """ Return The list of all mathematical function"""
-        return [i for i in MATH_FUNCTIONS]
-
-
+        return list(MATH_FUNCTIONS)

@@ -22,6 +22,7 @@ def playsound(filename = 'beep.mp3'):
 
 
 class CalculatorUI(tk.Tk):
+    """ Class for Graphical User Interface of Calculator """
     @staticmethod
     def _isnum(x):
         try:
@@ -38,11 +39,10 @@ class CalculatorUI(tk.Tk):
         operator = ["( )", '*', '/', '+', '-', '^', 'mod', '%']
         self.operator = Keypad(self, operator, 2)
         self.function = ttk.Combobox(self)
-        self.screen = tk.StringVar()
         self.exp_his = tk.Listbox(self, height=3)
         self.res_his = tk.Listbox(self, height=3)
         self.b_calculated = False
-        self.label = ttk.Label(self, textvariable=self.screen, foreground='white', anchor='e')
+        self.label = ttk.Label(self, foreground='white', anchor='e')
         self.init_component()
         self.get_mathfunc()
 
@@ -98,7 +98,6 @@ class CalculatorUI(tk.Tk):
 
     def scroll_handler(self, sync_listbox, event: tk.Event):
         """ Handle Syncing Listbox scroll events """
-        print(event)
         sync_listbox.yview_scroll(int(-4*(event.delta/120)), "units")
 
     def scrollbar_handler(self, *args):
@@ -123,100 +122,100 @@ class CalculatorUI(tk.Tk):
         widget = event.widget
         if str(widget['text']).isspace():
             return
-        # Handle Equal Sign
-        curr = self.screen.get()
-        if widget['text'] == '=':
-            self.handle_equal(curr)
-            return
 
+        curr = self.label['text']
         # There is only 0
         b = len(curr) == 1 and curr[0] == '0'
         if self.b_calculated and self._isnum(widget['text']) or b:
-            self.screen.set('')
+            self.label['text'] = ''
             curr = ''
         self.b_calculated = False
         # We Handle Parentheses Another Way
         if widget['text'] == '( )':
-            curr = self.screen.get()
+            curr = self.label['text']
             open_p = curr.count('(')
             close_p = curr.count(')')
             if close_p < open_p and (self._isnum(curr[-1]) or curr[-1] == ')'):
-                self.screen.set(curr + ')')
-                return
+                self.label['text'] = curr + ')'
             elif self._isnum(curr[-1]) or curr[-1] == ')':
-                self.screen.set(curr + '*(')
-                return
+                self.label['text'] = curr + '*('
             else:
-                self.screen.set(curr + '(')
-                return
+                self.label['text'] = curr + '('
+            return
 
         if len(curr) > 2 and curr[-2] in OPERATOR and curr[-1] == '0':
-            self.screen.set(curr[:-1])
-            curr = self.screen.get()
-        self.screen.set(curr + widget['text'])
+            self.label['text'] = curr[:-1]
+            curr = self.label['text']
+        self.label['text'] = curr + widget['text']
 
     def handle_equal(self, *args):
+        """ Handle the event that the equal sign button is pressed
+        calculate the expression and give a feedback if expression is invalid"""
         self.label.configure(foreground='white')
-        curr = self.screen.get()
+        curr = self.label['text']
         ans = CalculatorController.get_answer(curr)
         if ans != 'Invalid Format':
             self.exp_his.insert(0, curr + ' =')
             self.res_his.insert(0, ans)
-            self.screen.set(str(ans))
+            self.label['text'] = str(ans)
             self.b_calculated = True
         else:
             self.label.configure(foreground='red')
             playsound()
 
     def add_function(self, *args):
-        curr = self.screen.get()
+        """ Adding Mathematical Function into the Expression"""
+        curr = self.label['text']
         if curr == 'Invalid Format' or self.b_calculated:
-            self.screen.set('')
+            self.label['text'] = ''
             curr = ''
         self.b_calculated = False
         c_func = self.function['values'][self.function.current()]
         if curr == '':
-            self.screen.set(curr + c_func + "(")
+            self.label['text'] = curr + c_func + "("
         elif not self._isnum(curr[-1]):
-            self.screen.set(curr + c_func + "(")
+            self.label['text'] = curr + c_func + "("
         elif self._isnum(curr) or self._isnum(curr[-1]):
-            self.screen.set(c_func + "(" + curr + ")")
+            self.label['text'] = c_func + "(" + curr + ")"
         else:
-            self.screen.set(curr + c_func + "(")
+            self.label['text'] = curr + c_func + "("
 
     def del_handler(self, **args):
         """ Handle Delete Event"""
         if self.b_calculated:
-            self.screen.set('')
+            self.label['text'] = ''
             return
-        t = CalculatorController.delete(self.screen.get())
-        self.screen.set(t)
+        t = CalculatorController.delete(self.label['text'])
+        self.label['text'] = t
 
     def clear_handler(self, **args):
         """ Clear all Equation on Screen """
-        self.screen.set('')
+        self.label['text'] = ''
         self.b_calculated = False
         self.label.configure(foreground='white')
         self.exp_his.delete(0, tk.END)
         self.res_his.delete(0, tk.END)
 
     def load_expression(self, *args):
+        """ Copy the Selected Expression into the calculation Field"""
         curr = self.exp_his.curselection()
         try:
             t = self.exp_his.get(curr[0])
-            self.screen.set(str(t).removesuffix(' ='))
+            self.label['text'] = str(t).removesuffix(' =')
             self.b_calculated = False
         except IndexError:
             return
 
-    def load_answer(self, x, **kwargs):
+    def load_answer(self, *args):
+        """ Copy the Selected Answer into the Calculation Field"""
         curr = self.res_his.curselection()
         try:
             t = self.res_his.get(curr[0])
-            self.screen.set(str(t))
+            self.label['text'] = str(t)
             self.b_calculated = False
         except IndexError:
             return
 
     def run(self):
+        """ Run the GUI """
         self.mainloop()
